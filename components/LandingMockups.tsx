@@ -1,4 +1,4 @@
-import { FileText, Heart, MessageCircle, Send, Bookmark, Users, GraduationCap, Sparkles, Download } from "lucide-react";
+import { FileText, Users, Sparkles, Download } from "lucide-react";
 import PostCard from "@/components/PostCard";
 import type { PostFeedItem } from "@/lib/post-feed";
 
