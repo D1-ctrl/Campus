@@ -13,7 +13,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
@@ -22,12 +22,13 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Type-check
-        run: npx tsc --noEmit
-
       - name: Test
         run: npm test
 
+      # Runs Next.js's own build-time TypeScript check (which needs the
+      # ambient types Next generates, e.g. LayoutProps) - a standalone
+      # `tsc --noEmit` here fails because those types don't exist until
+      # a build has run at least once.
       - name: Build
         run: npm run build
         env:
