@@ -92,6 +92,9 @@ export default function StoriesBar() {
 
   useEffect(() => {
     loadStories();
+    // loadStories reads profile.university_id directly; re-running it only
+    // needs to be tied to that value, not to a fresh function identity.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.university_id]);
 
   async function handleCreateStory(file: File | null) {
