@@ -31,7 +31,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
       <>
         <header className="flex items-center justify-between gap-2 border-b border-black/10 px-4 py-3 dark:border-white/10 md:px-6 md:py-4">
           <Link href="/" className="truncate text-base font-semibold md:text-lg">
-            Kampus
+            Campus
           </Link>
           <div className="flex flex-shrink-0 items-center gap-2 md:gap-3">
             <ThemeToggle />

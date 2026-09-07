@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Search, Sparkles, CalendarDays } from "lucide-react";
+import { Home, Search, Plus, CalendarDays } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
 const NAV_ITEMS = [
@@ -39,11 +39,11 @@ export default function MobileBottomNav() {
       })}
 
       <Link
-        href="/flashcards"
-        aria-label="KI-Karteikarten"
-        className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-accent to-fuchsia-500 text-white shadow-lg"
+        href="/upload"
+        aria-label="Beitrag erstellen"
+        className="flex h-12 w-12 items-center justify-center rounded-full bg-accent text-white shadow-lg"
       >
-        <Sparkles size={21} strokeWidth={1.75} />
+        <Plus size={24} strokeWidth={2} />
       </Link>
 
       <Link

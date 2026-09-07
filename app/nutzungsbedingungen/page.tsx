@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Nutzungsbedingungen – Kampus",
+  title: "Nutzungsbedingungen – Campus",
 };
 
 export default function NutzungsbedingungenPage() {
@@ -10,7 +10,7 @@ export default function NutzungsbedingungenPage() {
       <section className="flex flex-col gap-2">
         <h2 className="font-semibold text-[var(--foreground)]">1. Geltungsbereich</h2>
         <p>
-          Diese Nutzungsbedingungen gelten für die Nutzung von Kampus, einer
+          Diese Nutzungsbedingungen gelten für die Nutzung von Campus, einer
           Plattform für Studierende zum Teilen von Lernmaterialien und zum
           Vernetzen mit Kommiliton:innen.
         </p>
@@ -29,7 +29,7 @@ export default function NutzungsbedingungenPage() {
         <p>
           Für von dir hochgeladene Inhalte (Dokumente, Bilder, Beiträge) bist du
           selbst verantwortlich. Du darfst nur Inhalte hochladen, an denen du die
-          erforderlichen Rechte besitzt, und keine Rechte Dritter verletzen. Kampus
+          erforderlichen Rechte besitzt, und keine Rechte Dritter verletzen. Campus
           behält sich vor, Inhalte zu entfernen, die gegen diese Bedingungen oder
           geltendes Recht verstoßen.
         </p>
@@ -47,7 +47,7 @@ export default function NutzungsbedingungenPage() {
       <section className="flex flex-col gap-2">
         <h2 className="font-semibold text-[var(--foreground)]">5. Verfügbarkeit</h2>
         <p>
-          Kampus befindet sich in aktiver Entwicklung. Wir übernehmen keine Gewähr
+          Campus befindet sich in aktiver Entwicklung. Wir übernehmen keine Gewähr
           für eine ununterbrochene Verfügbarkeit der Plattform.
         </p>
       </section>

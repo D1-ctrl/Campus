@@ -23,9 +23,9 @@ import {
 
 const FAQ_ITEMS = [
   {
-    question: "Ist Kampus kostenlos?",
+    question: "Ist Campus kostenlos?",
     answer:
-      "Ja. Alle Kernfunktionen sind kostenlos. Statt für Downloads zu bezahlen, schaust du dir bei Bedarf kurz eine Anzeige an – so bleibt Kampus für alle nutzbar.",
+      "Ja. Alle Kernfunktionen sind kostenlos. Statt für Downloads zu bezahlen, schaust du dir bei Bedarf kurz eine Anzeige an – so bleibt Campus für alle nutzbar.",
   },
   {
     question: "Welche Universitäten werden unterstützt?",
@@ -61,7 +61,7 @@ export default function LandingPage() {
             Nie wieder verlorene Unterlagen.
           </h1>
           <p className="max-w-md text-sm text-zinc-600 dark:text-zinc-400">
-            Kampus ist die App für Studierende: Skripte und Altklausuren teilen,
+            Campus ist die App für Studierende: Skripte und Altklausuren teilen,
             Kurse und Gruppen organisieren, mit Kommilitonen vernetzen – alles an
             einem Ort.
           </p>
@@ -116,7 +116,7 @@ export default function LandingPage() {
           icon={Sparkles}
           title="KI-Karteikarten"
           badge="Bald verfügbar"
-          description="Sag Tschüss zu stundenlangem Zusammenfassen. Die KI von Kampus verwandelt deine Unterlagen in Sekunden in Lernfragen."
+          description="Sag Tschüss zu stundenlangem Zusammenfassen. Die KI von Campus verwandelt deine Unterlagen in Sekunden in Lernfragen."
           bullets={[
             { label: "Automatisch generiert:", text: "Vorlesungsfolie hochladen, sofort Karteikarten erhalten." },
             { label: "Gezieltes Wiederholen:", text: "Fragen passend zu deinem Stoff, nicht generisch." },
@@ -250,7 +250,7 @@ export default function LandingPage() {
       <footer className="bg-zinc-950 px-6 py-12 text-zinc-400">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 sm:flex-row sm:justify-between">
           <div>
-            <p className="font-serif text-xl italic font-semibold text-white">Kampus</p>
+            <p className="font-serif text-xl italic font-semibold text-white">Campus</p>
             <p className="mt-1 text-sm">Dein Studium, digital organisiert.</p>
           </div>
           <div className="flex gap-10 text-sm">
@@ -275,7 +275,7 @@ export default function LandingPage() {
           </div>
         </div>
         <div className="mx-auto mt-10 flex w-full max-w-6xl flex-col gap-2 border-t border-white/10 pt-6 text-xs sm:flex-row sm:justify-between">
-          <span>© {new Date().getFullYear()} Kampus. Alle Rechte vorbehalten.</span>
+          <span>© {new Date().getFullYear()} Campus. Alle Rechte vorbehalten.</span>
           <span className="flex gap-3">
             <Link href="/impressum" className="hover:text-white">
               Impressum

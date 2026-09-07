@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Impressum – Kampus",
+  title: "Impressum – Campus",
 };
 
 export default function ImpressumPage() {
@@ -26,7 +26,7 @@ export default function ImpressumPage() {
       </section>
 
       <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-700 dark:text-amber-400">
-        Hinweis: Diese Seite enthält noch Platzhalter. Bevor Kampus öffentlich beworben
+        Hinweis: Diese Seite enthält noch Platzhalter. Bevor Campus öffentlich beworben
         wird, müssen die eckigen Klammern durch echte Angaben ersetzt werden – ein
         Impressum ist in Deutschland für öffentlich erreichbare Websites gesetzlich
         vorgeschrieben (§ 5 TMG).

@@ -16,9 +16,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Kampus",
+  title: "Campus",
   description:
-    "Kampus ist die App für Studierende: Skripte und Altklausuren teilen, Kurse und Gruppen organisieren, mit Kommilitonen vernetzen.",
+    "Campus ist die App für Studierende: Skripte und Altklausuren teilen, Kurse und Gruppen organisieren, mit Kommilitonen vernetzen.",
 };
 
 const THEME_INIT_SCRIPT = `

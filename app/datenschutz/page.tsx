@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Datenschutzerklärung – Kampus",
+  title: "Datenschutzerklärung – Campus",
 };
 
 export default function DatenschutzPage() {
@@ -72,7 +72,7 @@ export default function DatenschutzPage() {
       <section className="flex flex-col gap-2">
         <h2 className="font-semibold text-[var(--foreground)]">5. Werbung</h2>
         <p>
-          Kampus zeigt gelegentlich eigene Werbeanzeigen (kein Drittanbieter-Werbenetzwerk,
+          Campus zeigt gelegentlich eigene Werbeanzeigen (kein Drittanbieter-Werbenetzwerk,
           kein Tracking durch externe Werbeanbieter). Diese Anzeigen werden aus unserer
           eigenen Datenbank geladen.
         </p>

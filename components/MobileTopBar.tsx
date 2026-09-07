@@ -50,7 +50,7 @@ export default function MobileTopBar() {
             <Menu size={20} strokeWidth={1.75} />
           </button>
           <Link href="/" className="truncate font-serif text-xl italic font-semibold">
-            Kampus
+            Campus
           </Link>
         </div>
         <div className="flex flex-shrink-0 items-center gap-2.5">

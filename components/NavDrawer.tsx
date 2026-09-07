@@ -75,7 +75,7 @@ export default function NavDrawer({ open, onClose }: NavDrawerProps) {
         className="flex h-full w-64 flex-col gap-1 overflow-y-auto bg-[var(--background)] p-4 shadow-lg"
       >
         <div className="mb-4 flex items-center justify-between">
-          <span className="font-serif text-lg italic font-semibold">Kampus</span>
+          <span className="font-serif text-lg italic font-semibold">Campus</span>
           <button
             onClick={onClose}
             aria-label="Schließen"

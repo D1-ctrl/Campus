@@ -44,7 +44,7 @@ export default function LoginPage() {
   }
 
   return (
-    <AuthLayout title="Willkommen bei Kampus!" subtitle="Melde dich unten an.">
+    <AuthLayout title="Willkommen bei Campus!" subtitle="Melde dich unten an.">
       <SocialLoginRow />
       <Divider />
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
