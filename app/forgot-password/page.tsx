@@ -3,7 +3,10 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
+import { Send } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import AuthLayout from "@/components/auth/AuthLayout";
+import { AuthField, AuthSubmitButton, authInputClass } from "@/components/auth/AuthUI";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -32,48 +35,50 @@ export default function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-6 py-16 text-center">
-        <h1 className="mb-4 text-2xl font-semibold">E-Mail unterwegs</h1>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+      <AuthLayout title="E-Mail unterwegs">
+        <p className="text-center text-sm text-[#727272]">
           Falls ein Account mit dieser E-Mail existiert, haben wir dir einen
           Link zum Zurücksetzen des Passworts geschickt.
         </p>
-      </div>
+        <Link
+          href="/login"
+          className="mt-6 block text-center text-sm font-medium text-[#3883FA] hover:underline"
+        >
+          Zurück zum Login
+        </Link>
+      </AuthLayout>
     );
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-6 py-16">
-      <h1 className="mb-2 text-2xl font-semibold">Passwort vergessen</h1>
-      <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
-        Gib deine E-Mail-Adresse ein, wir schicken dir einen Link zum
-        Zurücksetzen.
-      </p>
+    <AuthLayout
+      title="Passwort vergessen"
+      subtitle="Gib deine E-Mail-Adresse ein, wir schicken dir einen Link zum Zurücksetzen."
+    >
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <label className="flex flex-col gap-1 text-sm">
-          E-Mail
+        <AuthField label="E-Mail">
           <input
             type="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="rounded-md border border-black/10 px-3 py-2 dark:border-white/15 dark:bg-transparent"
+            placeholder="max.mustermann@beispiel.de"
+            className={authInputClass}
           />
-        </label>
+        </AuthField>
+
         {error && <p className="text-sm text-red-600">{error}</p>}
-        <button
-          type="submit"
-          disabled={loading}
-          className="mt-2 rounded-full bg-accent px-5 py-2.5 text-white transition-colors hover:bg-accent/90 disabled:opacity-50"
-        >
+
+        <AuthSubmitButton loading={loading} icon={<Send size={16} />}>
           {loading ? "Wird gesendet..." : "Link senden"}
-        </button>
+        </AuthSubmitButton>
       </form>
-      <p className="mt-6 text-sm text-zinc-600 dark:text-zinc-400">
-        <Link href="/login" className="underline">
+
+      <p className="mt-6 text-center text-sm text-[#727272]">
+        <Link href="/login" className="font-medium text-[#3883FA] hover:underline">
           Zurück zum Login
         </Link>
       </p>
-    </div>
+    </AuthLayout>
   );
 }

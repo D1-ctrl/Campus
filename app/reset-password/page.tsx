@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { KeyRound } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import AuthLayout from "@/components/auth/AuthLayout";
+import { AuthSubmitButton, PasswordField } from "@/components/auth/AuthUI";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -58,73 +61,66 @@ export default function ResetPasswordPage() {
 
   if (done) {
     return (
-      <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-6 py-16 text-center">
-        <h1 className="mb-4 text-2xl font-semibold">Passwort geändert!</h1>
-        <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
+      <AuthLayout title="Passwort geändert!">
+        <p className="text-center text-sm text-[#727272]">
           Du kannst dich jetzt mit deinem neuen Passwort einloggen.
         </p>
-        <button
+        <AuthSubmitButton
+          type="button"
+          className="mt-6"
           onClick={() => {
             router.push("/login");
             router.refresh();
           }}
-          className="mx-auto w-fit rounded-full bg-accent px-5 py-2.5 text-white transition-colors hover:bg-accent/90"
         >
           Zum Login
-        </button>
-      </div>
+        </AuthSubmitButton>
+      </AuthLayout>
     );
   }
 
   if (!ready) {
     return (
-      <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-6 py-16 text-center">
-        <h1 className="mb-4 text-2xl font-semibold">Link ungültig</h1>
-        <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
+      <AuthLayout title="Link ungültig">
+        <p className="text-center text-sm text-[#727272]">
           Dieser Link ist abgelaufen oder ungültig. Fordere einen neuen an.
         </p>
-        <Link href="/forgot-password" className="underline">
+        <Link
+          href="/forgot-password"
+          className="mt-6 block text-center text-sm font-medium text-[#3883FA] hover:underline"
+        >
           Neuen Link anfordern
         </Link>
-      </div>
+      </AuthLayout>
     );
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-6 py-16">
-      <h1 className="mb-6 text-2xl font-semibold">Neues Passwort setzen</h1>
+    <AuthLayout title="Neues Passwort setzen">
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <label className="flex flex-col gap-1 text-sm">
-          Neues Passwort
-          <input
-            type="password"
-            required
-            minLength={6}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="rounded-md border border-black/10 px-3 py-2 dark:border-white/15 dark:bg-transparent"
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          Passwort bestätigen
-          <input
-            type="password"
-            required
-            minLength={6}
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            className="rounded-md border border-black/10 px-3 py-2 dark:border-white/15 dark:bg-transparent"
-          />
-        </label>
+        <PasswordField
+          label="Neues Passwort"
+          value={password}
+          onChange={setPassword}
+          required
+          minLength={6}
+          placeholder="********"
+        />
+        <PasswordField
+          label="Passwort bestätigen"
+          value={confirmPassword}
+          onChange={setConfirmPassword}
+          required
+          minLength={6}
+          placeholder="********"
+        />
+
         {error && <p className="text-sm text-red-600">{error}</p>}
-        <button
-          type="submit"
-          disabled={loading}
-          className="mt-2 rounded-full bg-accent px-5 py-2.5 text-white transition-colors hover:bg-accent/90 disabled:opacity-50"
-        >
+
+        <AuthSubmitButton loading={loading} icon={<KeyRound size={16} />}>
           {loading ? "Speichert..." : "Passwort speichern"}
-        </button>
+        </AuthSubmitButton>
       </form>
-    </div>
+    </AuthLayout>
   );
 }
