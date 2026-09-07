@@ -2,7 +2,9 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { AUTH_FLOW_PREFIXES } from "@/components/OnboardingGate";
 import Sidebar from "@/components/Sidebar";
 import TopBar from "@/components/TopBar";
 import MobileTopBar from "@/components/MobileTopBar";
@@ -11,9 +13,17 @@ import ThemeToggle from "@/components/ThemeToggle";
 
 export default function AppShell({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
+  const pathname = usePathname();
+  const isAuthRoute = AUTH_FLOW_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 
   if (loading) {
     return null;
+  }
+
+  // Login/Registrieren/Onboarding haben ihr eigenes, immer helles Design und
+  // brauchen weder Sidebar/TopBar noch die "Login/Registrieren"-Kopfzeile.
+  if (isAuthRoute) {
+    return <div className="flex min-h-screen flex-1 flex-col">{children}</div>;
   }
 
   if (!user) {

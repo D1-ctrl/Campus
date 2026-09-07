@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 
-const EXEMPT_PREFIXES = [
+export const AUTH_FLOW_PREFIXES = [
   "/onboarding",
   "/login",
   "/register",
@@ -21,7 +21,7 @@ export default function OnboardingGate() {
     if (loading || !user || !profile) return;
     if (profile.onboarding_completed_at) return;
     if (profile.is_admin) return;
-    if (EXEMPT_PREFIXES.some((prefix) => pathname.startsWith(prefix))) return;
+    if (AUTH_FLOW_PREFIXES.some((prefix) => pathname.startsWith(prefix))) return;
 
     router.push("/onboarding");
   }, [loading, user, profile, pathname, router]);

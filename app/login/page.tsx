@@ -4,12 +4,23 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { LogIn } from "lucide-react";
+import { supabase, setRememberMe } from "@/lib/supabase";
+import AuthLayout from "@/components/auth/AuthLayout";
+import {
+  AuthField,
+  AuthSubmitButton,
+  Divider,
+  PasswordField,
+  SocialLoginRow,
+  authInputClass,
+} from "@/components/auth/AuthUI";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -17,11 +28,9 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     setLoading(true);
+    setRememberMe(remember);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     setLoading(false);
 
@@ -35,52 +44,56 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-6 py-16">
-      <h1 className="mb-6 text-2xl font-semibold">Login</h1>
+    <AuthLayout title="Willkommen bei Kampus!" subtitle="Melde dich unten an.">
+      <SocialLoginRow />
+      <Divider />
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <label className="flex flex-col gap-1 text-sm">
-          E-Mail
+        <AuthField label="E-Mail">
           <input
             type="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="rounded-md border border-black/10 px-3 py-2 dark:border-white/15 dark:bg-transparent"
+            placeholder="max.mustermann@beispiel.de"
+            className={authInputClass}
           />
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          Passwort
-          <input
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="rounded-md border border-black/10 px-3 py-2 dark:border-white/15 dark:bg-transparent"
-          />
-        </label>
+        </AuthField>
+
+        <PasswordField
+          value={password}
+          onChange={setPassword}
+          required
+          placeholder="********"
+        />
+
+        <div className="flex items-center justify-between text-sm">
+          <label className="flex items-center gap-2 text-[#252525]">
+            <input
+              type="checkbox"
+              checked={remember}
+              onChange={(e) => setRemember(e.target.checked)}
+              className="h-4 w-4 rounded accent-[#3883FA]"
+            />
+            Angemeldet bleiben
+          </label>
+          <Link href="/forgot-password" className="text-[#3883FA] hover:underline">
+            Passwort vergessen?
+          </Link>
+        </div>
+
         {error && <p className="text-sm text-red-600">{error}</p>}
-        <button
-          type="submit"
-          disabled={loading}
-          className="mt-2 rounded-full bg-accent px-5 py-2.5 text-white transition-colors hover:bg-accent/90 disabled:opacity-50"
-        >
-          {loading ? "Einloggen..." : "Einloggen"}
-        </button>
+
+        <AuthSubmitButton loading={loading} icon={<LogIn size={16} />}>
+          {loading ? "Wird eingeloggt..." : "Anmelden"}
+        </AuthSubmitButton>
       </form>
-      <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
-        <Link href="/forgot-password" className="underline">
-          Passwort vergessen?
-        </Link>
-      </p>
-      <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
+
+      <p className="mt-6 text-center text-sm text-[#727272]">
         Noch keinen Account?{" "}
-        <Link
-          href="/register"
-          className="font-medium text-zinc-950 hover:underline dark:text-zinc-50"
-        >
+        <Link href="/register" className="font-medium text-[#3883FA] hover:underline">
           Registrieren
         </Link>
       </p>
-    </div>
+    </AuthLayout>
   );
 }

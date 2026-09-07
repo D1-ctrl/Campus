@@ -4,11 +4,23 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { UserPlus } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import AuthLayout from "@/components/auth/AuthLayout";
+import {
+  AuthField,
+  AuthSubmitButton,
+  Divider,
+  PasswordField,
+  SocialLoginRow,
+  authInputClass,
+} from "@/components/auth/AuthUI";
+
+const USERNAME_PATTERN = /^[a-z0-9_]{3,20}$/;
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [displayName, setDisplayName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -18,14 +30,36 @@ export default function RegisterPage() {
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+
+    const trimmedUsername = username.trim().toLowerCase();
+    if (!USERNAME_PATTERN.test(trimmedUsername)) {
+      setError(
+        "Username muss 3-20 Zeichen lang sein und darf nur Kleinbuchstaben, Zahlen und _ enthalten."
+      );
+      return;
+    }
+
     setLoading(true);
+
+    const { data: existing } = await supabase
+      .from("users")
+      .select("id")
+      .ilike("username", trimmedUsername)
+      .maybeSingle();
+
+    if (existing) {
+      setLoading(false);
+      setError("Dieser Username ist schon vergeben.");
+      return;
+    }
 
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
-          display_name: displayName,
+          username: trimmedUsername,
+          display_name: trimmedUsername,
         },
       },
     });
@@ -40,7 +74,7 @@ export default function RegisterPage() {
     // Wenn "Confirm email" deaktiviert ist, kommt sofort eine Session zurueck
     // und der Nutzer ist bereits eingeloggt.
     if (data.session) {
-      router.push("/");
+      router.push("/onboarding");
       router.refresh();
       return;
     }
@@ -50,69 +84,68 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-6 py-16 text-center">
-        <h1 className="mb-4 text-2xl font-semibold">Fast geschafft!</h1>
-        <p className="text-zinc-600 dark:text-zinc-400">
+      <AuthLayout title="Fast geschafft!">
+        <p className="text-center text-sm text-[#727272]">
           Wir haben dir eine E-Mail geschickt. Bitte bestätige deine Adresse,
           um dich einzuloggen.
         </p>
-      </div>
+      </AuthLayout>
     );
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-6 py-16">
-      <h1 className="mb-6 text-2xl font-semibold">Registrieren</h1>
+    <AuthLayout title="Konto erstellen" subtitle="Erstelle dein Konto in wenigen Schritten.">
+      <SocialLoginRow />
+      <Divider />
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <label className="flex flex-col gap-1 text-sm">
-          Name
-          <input
-            type="text"
-            required
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            className="rounded-md border border-black/10 px-3 py-2 dark:border-white/15 dark:bg-transparent"
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          E-Mail
+        <AuthField label="Username">
+          <div className="relative">
+            <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#727272]">
+              @
+            </span>
+            <input
+              type="text"
+              required
+              value={username}
+              onChange={(e) => setUsername(e.target.value.toLowerCase())}
+              placeholder="max_mustermann"
+              className={`${authInputClass} pl-8`}
+            />
+          </div>
+        </AuthField>
+
+        <AuthField label="Email">
           <input
             type="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="rounded-md border border-black/10 px-3 py-2 dark:border-white/15 dark:bg-transparent"
+            placeholder="max.mustermann@beispiel.de"
+            className={authInputClass}
           />
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          Passwort
-          <input
-            type="password"
-            required
-            minLength={6}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="rounded-md border border-black/10 px-3 py-2 dark:border-white/15 dark:bg-transparent"
-          />
-        </label>
+        </AuthField>
+
+        <PasswordField
+          value={password}
+          onChange={setPassword}
+          required
+          minLength={6}
+          placeholder="********"
+        />
+
         {error && <p className="text-sm text-red-600">{error}</p>}
-        <button
-          type="submit"
-          disabled={loading}
-          className="mt-2 rounded-full bg-accent px-5 py-2.5 text-white transition-colors hover:bg-accent/90 disabled:opacity-50"
-        >
-          {loading ? "Wird erstellt..." : "Account erstellen"}
-        </button>
+
+        <AuthSubmitButton loading={loading} icon={<UserPlus size={16} />}>
+          {loading ? "Wird erstellt..." : "Konto erstellen"}
+        </AuthSubmitButton>
       </form>
-      <p className="mt-6 text-sm text-zinc-600 dark:text-zinc-400">
+
+      <p className="mt-6 text-center text-sm text-[#727272]">
         Schon einen Account?{" "}
-        <Link
-          href="/login"
-          className="font-medium text-zinc-950 hover:underline dark:text-zinc-50"
-        >
+        <Link href="/login" className="font-medium text-[#3883FA] hover:underline">
           Login
         </Link>
       </p>
-    </div>
+    </AuthLayout>
   );
 }

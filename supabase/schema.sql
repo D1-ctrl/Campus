@@ -1817,3 +1817,26 @@ drop trigger if exists trg_messages_rate_limit on public.direct_messages;
 create trigger trg_messages_rate_limit
   before insert on public.direct_messages
   for each row execute function public.enforce_messages_rate_limit();
+
+-- =====================================================================
+-- Neues Registrierungsformular fragt den echten @username direkt bei der
+-- Registrierung ab (statt erst spaeter in den Einstellungen). Der Trigger,
+-- der beim Signup automatisch die public.users-Zeile anlegt, muss den Wert
+-- daher mit uebernehmen.
+-- =====================================================================
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  insert into public.users (id, display_name, university, username)
+  values (
+    new.id,
+    new.raw_user_meta_data ->> 'display_name',
+    new.raw_user_meta_data ->> 'university',
+    lower(new.raw_user_meta_data ->> 'username')
+  );
+  return new;
+end;
+$$;

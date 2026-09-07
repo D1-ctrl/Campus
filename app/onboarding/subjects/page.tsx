@@ -155,7 +155,9 @@ export default function OnboardingStep2Page() {
     }
 
     setSubmitting(false);
-    router.push("/onboarding/avatar");
+    // Aktuell nicht in den Onboarding-Ablauf verlinkt (siehe app/onboarding/page.tsx) -
+    // der Zielschritt "Profilbild" ist inzwischen Teil des einen Onboarding-Screens.
+    router.push("/");
   }
 
   if (authLoading || !user) {

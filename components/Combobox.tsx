@@ -13,6 +13,8 @@ type ComboboxProps = {
   onChange: (value: string) => void;
   placeholder?: string;
   emptyMessage?: string;
+  inputClassName?: string;
+  listClassName?: string;
 };
 
 const inputClass =
@@ -24,6 +26,8 @@ export default function Combobox({
   onChange,
   placeholder = "Suchen...",
   emptyMessage = "Keine Treffer.",
+  inputClassName,
+  listClassName,
 }: ComboboxProps) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -53,10 +57,15 @@ export default function Combobox({
         onBlur={() => {
           setTimeout(() => setOpen(false), 150);
         }}
-        className={`${inputClass} w-full`}
+        className={inputClassName ?? `${inputClass} w-full`}
       />
       {open && (
-        <ul className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md border border-black/10 bg-[var(--background)] text-sm shadow-lg dark:border-white/15">
+        <ul
+          className={
+            listClassName ??
+            "absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md border border-black/10 bg-[var(--background)] text-sm shadow-lg dark:border-white/15"
+          }
+        >
           {filtered.length === 0 ? (
             <li className="px-3 py-2 text-zinc-500 dark:text-zinc-400">
               {emptyMessage}
