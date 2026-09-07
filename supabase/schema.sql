@@ -1840,3 +1840,12 @@ begin
   return new;
 end;
 $$;
+
+-- =====================================================================
+-- Beitrag an einen Freund/Chat weiterleiten: die Nachricht bekommt eine
+-- Referenz auf den geteilten Post, damit der Chat eine echte Vorschau
+-- (statt nur eines rohen Links) anzeigen kann. on delete set null, damit
+-- ein geloeschter Post nicht die ganze Nachricht mitreisst.
+-- =====================================================================
+alter table public.direct_messages
+  add column if not exists shared_post_id uuid references public.posts (id) on delete set null;

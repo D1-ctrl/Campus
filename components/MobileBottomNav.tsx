@@ -20,7 +20,7 @@ export default function MobileBottomNav() {
   const initial = (profile?.display_name || user.email || "?").trim().charAt(0).toUpperCase();
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-around border-t border-white/10 bg-[var(--background)]/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur md:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-around rounded-t-3xl bg-[var(--background)]/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-2px_12px_rgba(0,0,0,0.06)] backdrop-blur md:hidden">
       {NAV_ITEMS.map((item) => {
         const Icon = item.icon;
         const active = pathname === item.href;

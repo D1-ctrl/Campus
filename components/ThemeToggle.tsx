@@ -8,7 +8,7 @@ type ThemeToggleProps = {
 };
 
 export default function ThemeToggle({ variant = "icon" }: ThemeToggleProps) {
-  const [isDark, setIsDark] = useState(true);
+  const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
     setIsDark(document.documentElement.classList.contains("dark"));

@@ -191,6 +191,7 @@ export type DirectMessage = {
   conversation_id: string;
   sender_id: string;
   body: string;
+  shared_post_id: string | null;
   created_at: string;
   read_at: string | null;
 };

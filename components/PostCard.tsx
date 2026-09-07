@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import Avatar from "@/components/Avatar";
 import ReportButton from "@/components/ReportButton";
+import SharePostSheet from "@/components/SharePostSheet";
 import type { PostFeedItem } from "@/lib/post-feed";
 
 type PostCardProps = {
@@ -34,7 +35,7 @@ export default function PostCard({ post }: PostCardProps) {
   const [voteCounts, setVoteCounts] = useState(post.poll_vote_counts);
   const [myVote, setMyVote] = useState(post.my_poll_vote);
   const [voting, setVoting] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleted, setDeleted] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -49,18 +50,6 @@ export default function PostCard({ post }: PostCardProps) {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [menuOpen]);
-
-  async function sharePost() {
-    if (typeof window === "undefined") return;
-    const url = `${window.location.origin}/community/${post.id}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // clipboard unavailable, ignore
-    }
-  }
 
   async function toggleLike() {
     if (!user || liking) return;
@@ -301,12 +290,11 @@ export default function PostCard({ post }: PostCardProps) {
           </Link>
           <button
             type="button"
-            onClick={sharePost}
+            onClick={() => setShareOpen(true)}
             className="flex items-center gap-1.5"
-            aria-label="Teilen"
+            aria-label="Senden"
           >
             <Send size={19} strokeWidth={1.75} />
-            {copied && <span className="text-xs text-zinc-500 dark:text-zinc-400">Kopiert</span>}
           </button>
         </div>
         <button
@@ -319,6 +307,8 @@ export default function PostCard({ post }: PostCardProps) {
           <Bookmark size={20} strokeWidth={1.75} className={saved ? "fill-current" : ""} />
         </button>
       </div>
+
+      {shareOpen && <SharePostSheet postId={post.id} onClose={() => setShareOpen(false)} />}
     </div>
   );
 }
