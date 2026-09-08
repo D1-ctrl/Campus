@@ -54,10 +54,10 @@ export default function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen flex-1">
       <Sidebar />
-      <div className="flex flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col">
         <TopBar />
         <MobileTopBar />
-        <div className="flex flex-1 flex-col pb-16 md:pb-0">{children}</div>
+        <div className="flex min-w-0 flex-1 flex-col pb-16 md:pb-0">{children}</div>
         <MobileBottomNav />
       </div>
     </div>

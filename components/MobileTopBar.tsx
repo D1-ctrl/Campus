@@ -40,7 +40,7 @@ export default function MobileTopBar() {
 
   return (
     <>
-      <header className="flex items-center justify-between gap-2 rounded-b-3xl bg-[var(--background)] px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] shadow-sm md:hidden">
+      <header className="sticky top-0 z-30 flex items-center justify-between gap-2 rounded-b-3xl bg-[var(--background)] px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] shadow-sm md:hidden">
         <div className="flex min-w-0 items-center gap-2">
           <button
             onClick={() => setDrawerOpen(true)}
