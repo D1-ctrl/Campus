@@ -3,27 +3,21 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { ArrowLeft, Send } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import Avatar from "@/components/Avatar";
+import PostCard from "@/components/PostCard";
 import ReportButton from "@/components/ReportButton";
-import type { Post, PostComment, PollOption } from "@/lib/types";
+import { POST_FEED_SELECT, enrichPosts } from "@/lib/post-feed";
+import type { PostFeedItem, RawFeedPost } from "@/lib/post-feed";
+import type { PostComment } from "@/lib/types";
 
 type AuthorInfo = { display_name: string | null; avatar_url: string | null };
-
-type PostWithMeta = Post & {
-  author: AuthorInfo | null;
-  subject: { name: string } | null;
-  group: { name: string } | null;
-  polls: { id: string; poll_options: PollOption[] } | null;
-};
 
 type CommentWithAuthor = PostComment & {
   author: AuthorInfo | null;
 };
-
-const inputClass =
-  "rounded-md border border-black/10 px-3 py-2 text-sm dark:border-white/15 dark:bg-transparent";
 
 function timeAgo(dateString: string): string {
   const diffMs = Date.now() - new Date(dateString).getTime();
@@ -42,10 +36,8 @@ export default function PostDetailPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
-  const [post, setPost] = useState<PostWithMeta | null>(null);
+  const [post, setPost] = useState<PostFeedItem | null>(null);
   const [comments, setComments] = useState<CommentWithAuthor[]>([]);
-  const [voteCounts, setVoteCounts] = useState<Record<string, number>>({});
-  const [myVote, setMyVote] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -54,13 +46,6 @@ export default function PostDetailPage() {
   const [submittingComment, setSubmittingComment] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingBody, setEditingBody] = useState("");
-
-  const [isBookmarked, setIsBookmarked] = useState(false);
-  const [bookmarkLoading, setBookmarkLoading] = useState(false);
-
-  const [isLiked, setIsLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
-  const [likeLoading, setLikeLoading] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -72,147 +57,30 @@ export default function PostDetailPage() {
     setLoading(true);
     setError(null);
 
-    const [{ data: postData, error: postError }, { data: commentsData }] =
-      await Promise.all([
-        supabase
-          .from("posts")
-          .select(
-            "*, author:users!posts_author_id_fkey(display_name, avatar_url), subject:subjects(name), group:groups(name), polls(id, poll_options(*))"
-          )
-          .eq("id", postId)
-          .single(),
-        supabase
-          .from("post_comments")
-          .select("*, author:users!post_comments_author_id_fkey(display_name, avatar_url)")
-          .eq("post_id", postId)
-          .order("created_at", { ascending: true }),
-      ]);
+    const [{ data: postData, error: postError }, { data: commentsData }] = await Promise.all([
+      supabase.from("posts").select(POST_FEED_SELECT).eq("id", postId).single(),
+      supabase
+        .from("post_comments")
+        .select("*, author:users!post_comments_author_id_fkey(display_name, avatar_url)")
+        .eq("post_id", postId)
+        .order("created_at", { ascending: true }),
+    ]);
 
-    if (postError) {
-      setError(postError.message);
+    if (postError || !postData) {
+      setError(postError?.message ?? "Beitrag nicht gefunden.");
       setLoading(false);
       return;
     }
 
-    setPost(postData as unknown as PostWithMeta);
+    const [enriched] = await enrichPosts([postData as unknown as RawFeedPost], user?.id ?? null);
+    setPost(enriched);
     setComments((commentsData ?? []) as unknown as CommentWithAuthor[]);
-
-    const poll = (postData as unknown as PostWithMeta).polls;
-    if (poll) {
-      const { data: counts } = await supabase.rpc("poll_option_counts", {
-        p_poll_id: poll.id,
-      });
-      const map: Record<string, number> = {};
-      (counts ?? []).forEach(
-        (c: { option_id: string; vote_count: number }) => {
-          map[c.option_id] = c.vote_count;
-        }
-      );
-      setVoteCounts(map);
-
-      if (user) {
-        const { data: voteData } = await supabase
-          .from("poll_votes")
-          .select("option_id")
-          .eq("poll_id", poll.id)
-          .eq("user_id", user.id)
-          .maybeSingle();
-        setMyVote(voteData?.option_id ?? null);
-      }
-    }
-
-    const [{ data: likeCountsData }] = await Promise.all([
-      supabase.rpc("post_like_counts", { p_post_ids: [postId] }),
-    ]);
-    setLikeCount(
-      ((likeCountsData ?? []) as { post_id: string; like_count: number }[])[0]?.like_count ?? 0
-    );
-
     setLoading(false);
   }, [postId, user]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
-
-  useEffect(() => {
-    if (!user) return;
-
-    supabase
-      .from("post_likes")
-      .select("post_id")
-      .eq("user_id", user.id)
-      .eq("post_id", postId)
-      .maybeSingle()
-      .then(({ data }) => setIsLiked(!!data));
-
-    supabase
-      .from("post_bookmarks")
-      .select("post_id")
-      .eq("user_id", user.id)
-      .eq("post_id", postId)
-      .maybeSingle()
-      .then(({ data }) => setIsBookmarked(!!data));
-  }, [user, postId]);
-
-  async function toggleBookmark() {
-    if (!user) return;
-
-    setBookmarkLoading(true);
-
-    if (isBookmarked) {
-      await supabase
-        .from("post_bookmarks")
-        .delete()
-        .eq("user_id", user.id)
-        .eq("post_id", postId);
-      setIsBookmarked(false);
-    } else {
-      await supabase
-        .from("post_bookmarks")
-        .insert({ user_id: user.id, post_id: postId });
-      setIsBookmarked(true);
-    }
-
-    setBookmarkLoading(false);
-  }
-
-  async function toggleLike() {
-    if (!user) return;
-
-    setLikeLoading(true);
-
-    if (isLiked) {
-      await supabase
-        .from("post_likes")
-        .delete()
-        .eq("user_id", user.id)
-        .eq("post_id", postId);
-      setIsLiked(false);
-      setLikeCount((c) => Math.max(0, c - 1));
-    } else {
-      await supabase.from("post_likes").insert({ user_id: user.id, post_id: postId });
-      setIsLiked(true);
-      setLikeCount((c) => c + 1);
-    }
-
-    setLikeLoading(false);
-  }
-
-  async function handleVote(optionId: string) {
-    const poll = post?.polls;
-    if (!user || !poll) return;
-
-    await supabase
-      .from("poll_votes")
-      .upsert(
-        { poll_id: poll.id, option_id: optionId, user_id: user.id },
-        { onConflict: "poll_id,user_id" }
-      );
-
-    setMyVote(optionId);
-    await loadData();
-  }
 
   async function handleCommentSubmit() {
     if (!user || !commentBody.trim()) return;
@@ -246,10 +114,7 @@ export default function PostDetailPage() {
   async function saveEditComment(commentId: string) {
     if (!editingBody.trim()) return;
 
-    await supabase
-      .from("post_comments")
-      .update({ body: editingBody.trim() })
-      .eq("id", commentId);
+    await supabase.from("post_comments").update({ body: editingBody.trim() }).eq("id", commentId);
 
     setEditingCommentId(null);
     setEditingBody("");
@@ -263,251 +128,163 @@ export default function PostDetailPage() {
 
   if (authLoading || !user || loading) {
     return (
-      <p className="px-6 py-10 text-sm text-zinc-600 dark:text-zinc-400">
-        Lädt...
-      </p>
+      <p className="px-6 py-10 text-sm text-zinc-500 dark:text-zinc-400">Lädt...</p>
     );
   }
 
   if (error || !post) {
     return (
-      <p className="px-6 py-10 text-sm text-red-600">
-        {error ?? "Beitrag nicht gefunden."}
-      </p>
+      <p className="px-6 py-10 text-sm text-red-600">{error ?? "Beitrag nicht gefunden."}</p>
     );
   }
 
-  const poll = post.polls;
-  const totalVotes = poll
-    ? poll.poll_options.reduce((sum, o) => sum + (voteCounts[o.id] ?? 0), 0)
-    : 0;
-
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-10">
+    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-6 md:px-6 md:py-10">
       <button
         onClick={() => router.back()}
-        className="flex w-fit items-center gap-1 text-sm text-zinc-600 hover:underline dark:text-zinc-400"
+        className="flex w-fit items-center gap-1.5 text-sm text-zinc-500 transition-colors hover:text-[var(--foreground)] dark:text-zinc-400"
       >
-        ← Zurück
+        <ArrowLeft size={16} strokeWidth={1.75} />
+        Zurück
       </button>
 
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
-          <div className="flex items-center gap-2">
-            {!post.is_anonymous && post.author && (
-              <Avatar
-                userId={post.author_id}
-                url={post.author.avatar_url}
-                name={post.author.display_name}
-                size={24}
-              />
-            )}
-            <span>
-              {post.is_anonymous ? (
-                "Anonymer Nutzer"
-              ) : (
-                <Link href={`/u/${post.author_id}`} className="font-medium hover:underline">
-                  {post.author?.display_name ?? "Unbekannt"}
-                </Link>
-              )}
-            </span>
-            {(post.subject || post.group) && (
-              <>
-                <span>·</span>
-                <span>
-                  {post.subject ? `🎓 ${post.subject.name}` : `🏷️ ${post.group!.name}`}
-                </span>
-              </>
-            )}
-          </div>
-          <div className="flex items-center gap-3">
-            <span>{timeAgo(post.created_at)}</span>
-            <button
-              onClick={toggleBookmark}
-              disabled={bookmarkLoading}
-              aria-label={isBookmarked ? "Aus Gespeichert entfernen" : "Beitrag speichern"}
-              className="text-base disabled:opacity-50"
-            >
-              {isBookmarked ? "🔖" : "📑"}
-            </button>
-          </div>
-        </div>
-        <p className="text-base">{post.body}</p>
-        {post.image_url && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={post.image_url}
-            alt=""
-            className="max-h-96 w-full rounded-md object-cover"
-          />
-        )}
-      </div>
+      <PostCard post={post} />
 
-      {poll && (
-        <div className="flex flex-col gap-2 rounded-lg border border-black/10 p-4 dark:border-white/15">
-          {poll.poll_options
-            .sort((a, b) => a.position - b.position)
-            .map((option) => {
-              const count = voteCounts[option.id] ?? 0;
-              const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
-              const voted = myVote === option.id;
-
-              return (
-                <button
-                  key={option.id}
-                  onClick={() => handleVote(option.id)}
-                  className={`relative overflow-hidden rounded-md border px-3 py-2 text-left text-sm transition-colors ${
-                    voted
-                      ? "border-accent"
-                      : "border-black/10 hover:bg-black/[.02] dark:border-white/15 dark:hover:bg-white/5"
-                  }`}
-                >
-                  <div
-                    className="absolute inset-y-0 left-0 bg-black/5 dark:bg-white/10"
-                    style={{ width: `${pct}%` }}
-                  />
-                  <div className="relative flex items-center justify-between">
-                    <span>
-                      {voted && "✓ "}
-                      {option.label}
-                    </span>
-                    <span className="text-zinc-500 dark:text-zinc-400">
-                      {pct}% ({count})
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            {totalVotes} {totalVotes === 1 ? "Stimme" : "Stimmen"}
-          </p>
-        </div>
-      )}
-
-      <button
-        type="button"
-        onClick={toggleLike}
-        disabled={likeLoading}
-        className="flex w-fit items-center gap-1.5 text-sm text-zinc-600 disabled:opacity-50 dark:text-zinc-400"
-        aria-label={isLiked ? "Gefällt mir nicht mehr" : "Gefällt mir"}
-      >
-        <span>{isLiked ? "❤️" : "🤍"}</span>
-        {likeCount}
-      </button>
-
-      <div className="flex flex-col gap-3">
-        <h2 className="text-sm font-semibold">
+      <div className="flex flex-col gap-4">
+        <h2 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400">
           {comments.length} {comments.length === 1 ? "Antwort" : "Antworten"}
         </h2>
 
-        <ul className="flex flex-col gap-3">
-          {comments.map((comment) => (
-            <li
-              key={comment.id}
-              className="rounded-lg border border-black/10 p-3 dark:border-white/15"
-            >
-              <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
-                <div className="flex items-center gap-2">
-                  {!comment.is_anonymous && comment.author && (
+        {comments.length === 0 ? (
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            Noch keine Antworten. Schreib die erste!
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-4">
+            {comments.map((comment) => {
+              const isOwn = comment.author_id === user.id;
+              return (
+                <li key={comment.id} className="flex gap-2.5">
+                  {!comment.is_anonymous && comment.author ? (
                     <Avatar
                       userId={comment.author_id}
                       url={comment.author.avatar_url}
                       name={comment.author.display_name}
-                      size={20}
+                      size={32}
                     />
-                  )}
-                  <span>
-                    {comment.is_anonymous ? (
-                      "Anonymer Nutzer"
-                    ) : (
-                      <Link
-                        href={`/u/${comment.author_id}`}
-                        className="font-medium hover:underline"
-                      >
-                        {comment.author?.display_name ?? "Unbekannt"}
-                      </Link>
-                    )}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span>{timeAgo(comment.created_at)}</span>
-                  {comment.author_id === user.id ? (
-                    <>
-                      <button
-                        onClick={() => startEditComment(comment)}
-                        className="hover:underline"
-                      >
-                        Bearbeiten
-                      </button>
-                      <button
-                        onClick={() => deleteComment(comment.id)}
-                        className="text-red-500 hover:underline"
-                      >
-                        Löschen
-                      </button>
-                    </>
                   ) : (
-                    <ReportButton targetType="comment" targetId={comment.id} />
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-black/10 text-xs font-medium text-zinc-500 dark:bg-white/10 dark:text-zinc-400">
+                      ?
+                    </div>
                   )}
-                </div>
-              </div>
-              {editingCommentId === comment.id ? (
-                <div className="mt-1 flex flex-col gap-2">
-                  <textarea
-                    value={editingBody}
-                    onChange={(e) => setEditingBody(e.target.value)}
-                    rows={2}
-                    className={inputClass}
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => saveEditComment(comment.id)}
-                      disabled={!editingBody.trim()}
-                      className="rounded-full bg-accent px-3 py-1 text-xs text-white disabled:opacity-50"
-                    >
-                      Speichern
-                    </button>
-                    <button
-                      onClick={() => setEditingCommentId(null)}
-                      className="rounded-full border border-black/10 px-3 py-1 text-xs dark:border-white/15"
-                    >
-                      Abbrechen
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <p className="mt-1 text-sm">{comment.body}</p>
-              )}
-            </li>
-          ))}
-        </ul>
+                  <div className="flex min-w-0 flex-1 flex-col gap-1">
+                    <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+                      <span className="font-semibold text-[var(--foreground)]">
+                        {comment.is_anonymous ? (
+                          "Anonymer Nutzer"
+                        ) : (
+                          <Link href={`/u/${comment.author_id}`} className="hover:underline">
+                            {comment.author?.display_name ?? "Unbekannt"}
+                          </Link>
+                        )}
+                      </span>
+                      <span>·</span>
+                      <span>{timeAgo(comment.created_at)}</span>
+                    </div>
 
-        <div className="flex flex-col gap-2 rounded-lg border border-black/10 p-3 dark:border-white/15">
-          <textarea
-            value={commentBody}
-            onChange={(e) => setCommentBody(e.target.value)}
-            placeholder="Antworten..."
-            rows={2}
-            className={inputClass}
-          />
-          <div className="flex items-center justify-between">
-            <label className="flex items-center gap-1.5 text-sm">
+                    {editingCommentId === comment.id ? (
+                      <div className="flex flex-col gap-2">
+                        <textarea
+                          value={editingBody}
+                          onChange={(e) => setEditingBody(e.target.value)}
+                          rows={2}
+                          className="w-full rounded-2xl bg-[var(--card)] px-3.5 py-2 text-sm outline-none focus:ring-2 focus:ring-accent/40"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => saveEditComment(comment.id)}
+                            disabled={!editingBody.trim()}
+                            className="rounded-full bg-accent px-3 py-1 text-xs text-white disabled:opacity-50"
+                          >
+                            Speichern
+                          </button>
+                          <button
+                            onClick={() => setEditingCommentId(null)}
+                            className="rounded-full border border-black/10 px-3 py-1 text-xs dark:border-white/15"
+                          >
+                            Abbrechen
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="w-fit max-w-full rounded-2xl bg-[var(--card)] px-3.5 py-2 text-sm">
+                        {comment.body}
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-3 px-1 text-xs text-zinc-500 dark:text-zinc-400">
+                      {isOwn ? (
+                        <>
+                          <button onClick={() => startEditComment(comment)} className="hover:underline">
+                            Bearbeiten
+                          </button>
+                          <button
+                            onClick={() => deleteComment(comment.id)}
+                            className="text-red-500 hover:underline"
+                          >
+                            Löschen
+                          </button>
+                        </>
+                      ) : (
+                        <ReportButton
+                          targetType="comment"
+                          targetId={comment.id}
+                          className="text-zinc-500 dark:text-zinc-400"
+                        />
+                      )}
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+
+        <div className="flex flex-col gap-2 pt-2">
+          <div className="flex items-end gap-2">
+            <div className="flex flex-1 items-center rounded-full bg-[var(--card)] px-4 py-2.5">
               <input
-                type="checkbox"
-                checked={commentAnonymous}
-                onChange={(e) => setCommentAnonymous(e.target.checked)}
+                type="text"
+                value={commentBody}
+                onChange={(e) => setCommentBody(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleCommentSubmit();
+                }}
+                placeholder="Antworten..."
+                className="w-full bg-transparent text-sm outline-none placeholder:text-zinc-500 dark:placeholder:text-zinc-400"
               />
-              Anonym
-            </label>
+            </div>
             <button
+              type="button"
               onClick={handleCommentSubmit}
               disabled={submittingComment || !commentBody.trim()}
-              className="rounded-full bg-accent px-4 py-1.5 text-sm text-white transition-colors hover:bg-accent/90 disabled:opacity-50"
+              aria-label="Antwort senden"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-white transition-opacity hover:opacity-90 disabled:opacity-50"
             >
-              {submittingComment ? "Wird gesendet..." : "Antworten"}
+              <Send size={17} strokeWidth={1.75} />
             </button>
           </div>
+          <label className="flex w-fit items-center gap-1.5 pl-1 text-xs text-zinc-500 dark:text-zinc-400">
+            <input
+              type="checkbox"
+              checked={commentAnonymous}
+              onChange={(e) => setCommentAnonymous(e.target.checked)}
+            />
+            Anonym antworten
+          </label>
         </div>
+
+        {error && <p className="text-sm text-red-600">{error}</p>}
       </div>
     </main>
   );
